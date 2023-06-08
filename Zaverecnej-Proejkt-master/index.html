@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Jokes</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="banana.png" type="image/png">
+</head>
+<body>
+   
+    <div class="nav">
+        <span class="title">Joke Generator</span>
+        <a href="index.html" class="home active">Home</a>
+        <a href="rating.html" class="rating">Rating</a>
+        <a href="about.html" class="about">About Us</a>
+        <a href="contact.html" class="contact">Contact Me</a>
+    </div>
+    
+
+    <div class="content">
+        <h1>Random Jokes</h1>
+        <button onclick="GetJoke()">Generate Joke</button>
+        <p id="joke"></p>
+        <div>
+            <span class="like-button" onclick="likeJoke()">Like</span>
+            <span class="dislike-button" onclick="dislikeJoke()">Dislike</span>
+        </div>
+        
+        
+    </div>
+
+    <footer>
+        <p>&copy; 2023 Dmytro Shyshka. All rights reserved.</p>
+    </footer>
+    <script>
+        var currentJoke = null;
+        var likedJokes = [];
+        var dislikedJokes = [];
+
+        var storedLikedJokes = localStorage.getItem('likedJokes');
+        var storedDislikedJokes = localStorage.getItem('dislikedJokes');
+
+        if (storedLikedJokes) {
+            likedJokes = JSON.parse(storedLikedJokes);
+            updateLikedJokes();
+        }
+
+        if (storedDislikedJokes) {
+            dislikedJokes = JSON.parse(storedDislikedJokes);
+            updateDislikedJokes();
+        }
+        function GetJoke() {
+            $.ajax({
+                url: "https://v2.jokeapi.dev/joke/Any",
+                type: "GET",
+                dataType: "json",
+                success: function (response) {
+                    var joke = response;
+                        if(joke.type === "single") {
+                          $('#joke').text(joke.joke);
+                        } 
+                        else if (joke.type === "twopart"){
+                        $('#joke').text(joke.setup + " " + joke.delivery);
+                        }  
+                        currentJoke = joke;
+ 
+                    },
+
+                error: function() {
+                    alert('Error retrieving joke. Please try again later.')
+                }
+            });
+
+            localStorage.setItem('currentJoke', JSON.stringify(currentJoke));
+
+            var generateJokeButton = $('button[onclick="GetJoke()"]');
+            generateJokeButton.effect('bounce', { times: 1, distance: 10 }, 300);
+        }
+
+        function likeJoke() {
+            if (currentJoke != null && !isJokeInList(currentJoke, likedJokes) && !isJokeInList(currentJoke, dislikedJokes)) {
+                console.log('Liked joke:', currentJoke);
+                likedJokes.push(currentJoke);
+                updateLikedJokes();
+            }
+            localStorage.setItem('likedJokes', JSON.stringify(likedJokes));
+            $(button).effect('highlight', { color: 'green' }, 500);
+           
+        }
+
+        function dislikeJoke() {
+            if (currentJoke != null && !isJokeInList(currentJoke, likedJokes) && !isJokeInList(currentJoke, dislikedJokes)) {
+                console.log('Disliked joke:', currentJoke);
+                dislikedJokes.push(currentJoke);
+                updateDislikedJokes();
+            }
+            localStorage.setItem('dislikedJokes', JSON.stringify(dislikedJokes));
+            $(button).effect('highlight', { color: 'red' }, 500);
+           
+        }
+
+
+       
+
+        function isJokeInList(joke, list) {
+            return list.some(function (item) {
+                return (
+                    item.type === joke.type &&
+                    item.joke === joke.joke &&
+                    item.setup === joke.setup &&
+                    item.delivery === joke.delivery
+                );
+            });
+        }
+
+        function updateLikedJokes() {
+           var likedJokesList = $('.liked-jokes ul');
+              likedJokesList.empty();
+              for(var i = 0; i < likedJokes.length; i++) {
+                  var joke = likedJokes[i];
+                  var jokeText = '';
+                  if (joke.type === 'single') {
+                      jokeText = joke.joke;
+                  } else if (joke.type === 'twopart') {
+                      jokeText = joke.setup + ' ' + joke.delivery;
+                  }
+                  var jokeItem = $('<li>').text(jokeText);
+                    likedJokesList.append(jokeItem);
+              }
+              localStorage.setItem('likedJokes', JSON.stringify(likedJokes));
+        }
+
+        function updateDislikedJokes() {
+            var dislikedJokesList = $('.disliked-jokes ul');
+            dislikedJokesList.empty();
+            for(var i = 0; i < dislikedJokes.length; i++) {
+                var joke = dislikedJokes[i];
+                var jokeText = '';
+                if (joke.type === 'single') {
+                    jokeText = joke.joke;
+                } else if (joke.type === 'twopart') {
+                    jokeText = joke.setup + ' ' + joke.delivery;
+                }
+                var jokeItem = $('<li>').text(jokeText);
+                    dislikedJokesList.append(jokeItem);
+            }
+            localStorage.setItem('dislikedJokes', JSON.stringify(dislikedJokes));
+        }
+
+        $(document).ready(function () {
+        GetJoke();
+
+        $('.like-button').click(function () {
+            likeJoke();
+        });
+
+        $('.dislike-button').click(function () {
+            dislikeJoke();
+        });
+
+        $('.show-liked-jokes').click(function () {
+            $('.like-jokes').toggle();
+        });
+
+        $('.show-disliked-jokes').click(function () {
+            $('.dislike-jokes').toggle();
+        });
+
+        $('.home').click(function () {
+            $('.home').addClass('active');
+            $('.about').removeClass('active');
+            $('.rating').removeClass('active');
+            $('.contact').removeClass('active');
+
+      
+        });
+
+        $('.about').click(function () {
+            $('.about').addClass('active');
+            $('.home').removeClass('active');
+            $('.rating').removeClass('active');
+            $('.contact').removeClass('active');
+            
+           
+        });
+
+        $('.rating').click(function () {
+            $('.rating').addClass('active');
+            $('.home').removeClass('active');
+            $('.about').removeClass('active');
+            $('.contact').removeClass('active');
+           
+        });
+
+        $('.contact').click(function () {
+            $('.contact').addClass('active');
+            $('.home').removeClass('active');
+            $('.about').removeClass('active');
+            $('.rating').removeClass('active');
+           
+        });
+
+
+    });
+    </script>
+</body>
+</html>
